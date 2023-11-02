@@ -1,101 +1,106 @@
 package org.philipquan;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Timer;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.IntStream;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
+
 
 public class ClientApp {
 
     private final Integer threadCount;
     private final Integer groupCount;
+    private final Integer delayInSeconds;
     private final String hostUrl;
     private final String image;
-    private final List<MethodStatistic> methodStatistics;
+    private final List<RequestStatistic> methodStatistics;
     private long startTime;
     private long endTime;
 
-    private static final String GET_PATH = "/albums";
-    private static final String POST_PATH = "/albums";
+    private static final String ENDPOINT = "/albums";
     private static final Integer INITIAL_RUN_THREAD_COUNT = 1; // 10
     private static final Integer INITIAL_RUN_LOOP_COUNT = 1; // 100
     private static final Integer SERVER_METHOD_CALL_COUNT = 1000;
     private static final Integer METHOD_RETRY_COUNT = 5;
 
-    public ClientApp(Integer threadCount, Integer groupCount, String hostUrl, String image, List methodStatistics) {
+    public ClientApp(Integer threadCount, Integer groupCount, Integer delayInSeconds, String hostUrl, String image, List methodStatistics) {
         this.threadCount = threadCount;
         this.groupCount = groupCount;
+        this.delayInSeconds = delayInSeconds;
         this.hostUrl = hostUrl;
         this.image = image;
         this.methodStatistics = methodStatistics;
     }
 
+    /**
+     * @return {@code true} if a GET request to {@code this.hostUrl} returns a status code between
+     * {@link HttpStatus#SC_OK} and {@link HttpStatus#SC_BAD_REQUEST}.
+     */
     public Boolean hostUrlExists() {
-//        HttpClient client = HttpClientBuilder.create()
-//          .setRetryHandler(new StandardHttpRequestRetryHandler(METHOD_RETRY_COUNT, true))
-//          .build();
-//        HttpGet testConnectionMethod = new HttpGet(this.hostUrl + GET_PATH);
-//        try {
-//            client.execute(testConnectionMethod);
-//        } catch (IOException e) {
-//            return false;
-//        } finally {
-//            testConnectionMethod.releaseConnection();
-//        }
-        return true;
+        HttpClient client = HttpClientBuilder.create()
+          .setRetryHandler(new StandardHttpRequestRetryHandler(METHOD_RETRY_COUNT, true))
+          .build();
+        HttpGet request = new HttpGet(this.hostUrl + ENDPOINT);
+        try {
+            int statusCode = client.execute(request).getStatusLine().getStatusCode();
+            return statusCode >= HttpStatus.SC_OK && statusCode <= HttpStatus.SC_BAD_REQUEST;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     public void initialRun() {
         CountDownLatch latch = new CountDownLatch(INITIAL_RUN_THREAD_COUNT);
-        IntStream.range(0, INITIAL_RUN_THREAD_COUNT).forEach(i -> {
-            Runnable instruction = () -> {
-                callServer(INITIAL_RUN_LOOP_COUNT);
-                latch.countDown();
-            };
-            new Thread(instruction).start();
-        });
+        processThreads(INITIAL_RUN_THREAD_COUNT, INITIAL_RUN_LOOP_COUNT, latch);
         try {
             latch.await();
         } catch (InterruptedException e) {
-            System.out.println("Something went wrong in Main.firstRun()");
+            System.out.println("Something went wrong in initialRun()");
             throw new RuntimeException(e);
         }
     }
 
-    public void processGroup(CountDownLatch latch) {
-        IntStream.range(0, this.threadCount).forEach(i -> {
+    public void groupRun() {
+        CountDownLatch latch = new CountDownLatch(threadCount * groupCount);
+        IntStream.range(0, groupCount).forEach(i -> {
+            System.out.println("Processing group: " + i + "...");
+            processThreads(this.threadCount, SERVER_METHOD_CALL_COUNT, latch);
+            try {
+                Thread.sleep(this.delayInSeconds * 1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            System.out.println("Something went wrong in processGroup()");
+            throw new RuntimeException(e);
+        }
+    }
+    public void processThreads(int threadCount, int requestCount, CountDownLatch latch) {
+        IntStream.range(0, threadCount).forEach(i -> {
             Runnable instruction = () -> {
-                callServer(SERVER_METHOD_CALL_COUNT);
+                callServer(requestCount);
                 latch.countDown();
             };
             new Thread(instruction).start();
         });
     }
 
-    private void callServer(final int methodCallCount) {
+    private void callServer(int requestCount) {
 //        HttpClient client = HttpClientBuilder.create()
 //          .setRetryHandler(new StandardHttpRequestRetryHandler(METHOD_RETRY_COUNT, true))
 //          .build();
-        IntStream.range(0, methodCallCount).forEach(j -> {
+        IntStream.range(0, requestCount).forEach(j -> {
             Integer albumId = postAlbum();
             getAlbum(albumId);
         });
@@ -105,21 +110,26 @@ public class ClientApp {
      * @return The id of the newly posted album.
      */
     private Integer postAlbum() {
-        try {
-            URL url = new URI("something").toURL();
-            HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "multipart/form-data");
-            connection.setDoOutput(true);
-            DataOutputStream stream = new DataOutputStream(connection.getOutputStream());
-
-            String body = "image=" + this.image + "," + "profile={\"artist\": \"Sex Pistols\", \"title\": \"Never Mind the Bollocks\", \"year\": 1983}";
-            stream.writeBytes(body);
-            stream.flush();
-            stream.close();
-        } catch (URISyntaxException | IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            String body = "image=" + this.image + "," + "profile={\"artist\": \"Sex Pistols\", \"title\": \"Never Mind the Bollocks\", \"year\": 1983}";
+//            HttpRequest request = HttpRequest.newBuilder()
+//              .uri(URI.create(this.hostUrl))
+//              .header("Content-Type", "multipart/form-data")
+//              .POST(BodyPublishers.ofString(body))
+//              .build();
+//            URL url = new URI(this.hostUrl).toURL();
+//            HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+//            connection.setRequestMethod("POST");
+//            connection.setRequestProperty("Content-Type", "multipart/form-data");
+//            connection.setDoOutput(true);
+//            DataOutputStream stream = new DataOutputStream(connection.getOutputStream());
+//
+//            stream.writeBytes(body);
+//            stream.flush();
+//            stream.close();
+//        } catch (URISyntaxException | IOException e) {
+//            throw new RuntimeException(e);
+//        }
 
 //        HttpPost post = new HttpPost(this.hostUrl + POST_PATH);
 //        HttpEntity entity = MultipartEntityBuilder.create()
@@ -143,8 +153,18 @@ public class ClientApp {
         return -1;
     }
 
-    private void getAlbum(Integer albumId) {
-        // TODO
+    private void getAlbum(HttpClient client, Integer albumId) {
+        HttpGet request = new HttpGet(this.hostUrl + ENDPOINT);
+        RequestTimer timer = new RequestTimer();
+        HttpResponse response = null;
+        try {
+            timer.start();
+            response = client.execute(request);
+            timer.stop();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        this.methodStatistics.add(RequestStatistic.createGet(response.getStatusLine().getStatusCode(), timer));
     }
 
 //    private void callServerMethod(final HttpClient client, final HttpMethod method) {
@@ -174,7 +194,7 @@ public class ClientApp {
         System.out.println("Wall Time: " + runtimeInSeconds + " second(s)");
         System.out.println("Throughput: " + throughput + " requests per second");
 
-        this.methodStatistics.sort(Comparator.comparingLong(MethodStatistic::getLatency));
+        this.methodStatistics.sort(Comparator.comparingLong(RequestStatistic::getLatency));
         final long minLatency = this.methodStatistics.get(0).getLatency();
         System.out.println("Min latency: " + minLatency);
 
