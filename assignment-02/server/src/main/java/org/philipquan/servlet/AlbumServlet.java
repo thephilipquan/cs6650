@@ -67,7 +67,7 @@ public class AlbumServlet extends HttpServlet {
         Map<String, Object> messages = new HashMap<>();
         final String imageKey = Album.IMAGE_KEY.toLowerCase();
         final String profileKey = "profile";
-        List<String> required = null;
+        List<String> required;
 
         required = Arrays.asList(imageKey, profileKey);
         if (!streamContainsAllList(request.getParts().stream().map(Part::getName), required)) {

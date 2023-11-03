@@ -1,32 +1,34 @@
 package org.philipquan;
 
-public class MethodStatistic {
-
-    private final long methodStartTime;
-    private final String methodType;
+public class RequestStatistic {
+    private final String requestType;
     private final long latency;
     private final int statusCode;
 
-    public MethodStatistic(long methodStartTime, String methodType, long latencyInMilliseconds, int statusCode) {
-        this.methodStartTime = methodStartTime;
-        this.methodType = methodType;
-        this.latency = latencyInMilliseconds;
+    public static RequestStatistic createGet(int statusCode, Timer timer) {
+        return new RequestStatistic("GET", statusCode, timer.getElapsedTime());
+    }
+
+    public static RequestStatistic createPost(int statusCode, Timer timer) {
+        return new RequestStatistic("POST", statusCode, timer.getElapsedTime());
+    }
+
+    private RequestStatistic(String requestType, int statusCode, long latency) {
+        this.requestType = requestType;
         this.statusCode = statusCode;
+        this.latency = latency;
     }
 
-    public long getStartRequestTime() {
-        return this.methodStartTime;
-    }
-
-    public String getMethodType() {
-        return this.methodType;
+    public String getRequestType() {
+        return requestType;
     }
 
     public long getLatency() {
-        return this.latency;
+        return latency;
     }
 
     public int getStatusCode() {
-        return this.statusCode;
+        return statusCode;
     }
+
 }

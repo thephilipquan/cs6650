@@ -8,8 +8,10 @@ import java.util.Properties;
 public class ConnectionManager {
 
     private final String user = "root";
-    private final String password = "AlbumAppToor";
-    private final String hostname = "albumapptrial.ctt3ctvkrpkp.us-west-2.rds.amazonaws.com";
+//    private final String password = "AlbumAppToor";
+//    private final String hostname = "albumapptrial.ctt3ctvkrpkp.us-west-2.rds.amazonaws.com";
+    private final String password = "toor";
+    private final String hostname = "localhost";
     private final int port = 3306;
     private final String database = "AlbumApp";
     private final String timezone = "UTC";

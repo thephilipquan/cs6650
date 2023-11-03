@@ -29,7 +29,7 @@ public class AlbumDao {
 
     public Album getAlbumById(Long albumId) {
         String query = "SELECT * FROM " + TABLE_NAME +
-          " WHERE id=?";
+          " WHERE id=?;";
         ResultSet result = null;
         try (
           Connection connection = this.connectionManager.getConnection();
@@ -55,8 +55,10 @@ public class AlbumDao {
     }
 
     public Album createAlbum(Album album) {
-        String query = "INSERT INTO " + TABLE_NAME + " (" + Album.ARTIST_KEY + ", " + Album.TITLE_KEY + ", " + Album.YEAR_KEY + ", " + Album.IMAGE_KEY + ") " +
-          " VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO " + TABLE_NAME +
+          " (" + Album.ARTIST_KEY + ", " + Album.TITLE_KEY +
+          ", " + Album.YEAR_KEY + ", " + Album.IMAGE_KEY + ")" +
+          " VALUES (?, ?, ?, ?);";
         ResultSet result = null;
         try (
           Connection connection = this.connectionManager.getConnection();
@@ -72,19 +74,21 @@ public class AlbumDao {
                 throw new RuntimeException("There was an error when creating the given album info: " + album);
             }
             result = statement.getGeneratedKeys();
-            result.next();
-            return new Album(
-              result.getLong(1),
-              album.getArtist(),
-              album.getTitle(),
-              album.getYear(),
-              album.getImage()
-            );
+            if (result.next()) {
+                return new Album(
+                  result.getLong(1),
+                  album.getArtist(),
+                  album.getTitle(),
+                  album.getYear(),
+                  album.getImage()
+                );
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
             safeCloseResultSet(result);
         }
+        return null;
     }
 
     private void safeCloseResultSet(ResultSet result) {
