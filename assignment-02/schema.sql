@@ -1,14 +1,12 @@
-CREATE DATABASE IF NOT EXISTS AlbumApp;
-USE AlbumApp;
+CREATE SCHEMA IF NOT EXISTS album_app;
+SET search_path TO album_app;
 
-DROP TABLE IF EXISTS Albums;
+DROP TABLE IF EXISTS albums;
 
-CREATE TABLE Albums(
-	Id INT AUTO_INCREMENT,
-	Artist VARCHAR(255) NOT NULL,
-	Title VARCHAR(255) NOT NULL,
-	Year INT NOT NULL,
-	Image BLOB NOT NULL,
-	CONSTRAINT pk_Albums_Id
-		PRIMARY KEY (Id)
+CREATE TABLE albums(
+	id serial PRIMARY KEY,
+	artist varchar(255) NOT NULL,
+	title varchar(255) NOT NULL,
+	year integer NOT NULL,
+	image bytea NOT NULL
 );
