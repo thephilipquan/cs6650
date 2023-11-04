@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Main {
 
@@ -55,35 +56,42 @@ public class Main {
         }
     }
 
-    private static void reportStatistics(List<RequestStatistic> requestStatistics, int groupCount, int groupThreadCount, Timer timer) {
+    private static void reportStatistics(List<RequestStatistic> stats, int groupCount, int groupThreadCount, Timer timer) {
+        StringBuilder report = new StringBuilder();
+
         final double runtimeInSeconds = (double) timer.getElapsedTime() / 1000;
-        final long throughput = Math.round((groupCount * groupThreadCount * GROUP_REQUEST_COUNT
-          * 2) / runtimeInSeconds);
-        System.out.println("Wall Time: " + runtimeInSeconds + " second(s)");
-        System.out.println("Throughput: " + throughput + " requests per second");
+        final long throughput = Math.round((groupCount * groupThreadCount * GROUP_REQUEST_COUNT * 2) / runtimeInSeconds);
+        report.append("Wall Time: " + runtimeInSeconds + " second(s)");
+        report.append("Throughput: " + throughput + " requests per second");
 
-        requestStatistics.sort(Comparator.comparingLong(RequestStatistic::getLatency));
-        final long minLatency = requestStatistics.get(0).getLatency();
-        System.out.println("Min latency: " + minLatency);
+        List<RequestStatistic> passed = stats.stream().filter((r) -> r.getStatusCode() <= 201).collect(Collectors.toList());
+        List<RequestStatistic> failed = stats.stream().filter((r) -> r.getStatusCode() > 201).collect(Collectors.toList());
+        report.append("success " + passed.size());
+        report.append("failed: " + failed.size());
 
-        final long maxLatency = requestStatistics.get(requestStatistics.size() - 1).getLatency();
-        System.out.println("Max latency: " + maxLatency);
+        reportRequestType(passed, report);
+        reportRequestType(failed, report);
+    }
 
-        final long meanLatency = requestStatistics.stream()
+    private static void reportRequestType(List<RequestStatistic> stats, StringBuilder report) {
+        stats.sort(Comparator.comparingLong(RequestStatistic::getLatency));
+        final long minLatency = stats.get(0).getLatency();
+        report.append("Min latency: " + minLatency);
+
+        final long maxLatency = stats.get(stats.size() - 1).getLatency();
+        report.append("Max latency: " + maxLatency);
+
+        final long meanLatency = stats.stream()
           .map(RequestStatistic::getLatency)
-          .reduce(0L, Long::sum) / requestStatistics.size();
-        System.out.println("Mean latency: " + meanLatency);
+          .reduce(0L, Long::sum) / stats.size();
+        report.append("Mean latency: " + meanLatency);
 
-        final int middleIndex = requestStatistics.size() / 2;
-        final long medianLatency = requestStatistics.get(middleIndex).getLatency();
-        System.out.println("Median latency: " + medianLatency);
+        final int middleIndex = stats.size() / 2;
+        final long medianLatency = stats.get(middleIndex).getLatency();
+        report.append("Median latency: " + medianLatency);
 
-        final int percentileIndex = (int) Math.ceil(0.99 * requestStatistics.size());
-        if (percentileIndex >= requestStatistics.size()) {
-            System.out.println("percentile index is too large");
-        } else {
-            final long percentile99Latency = requestStatistics.get(percentileIndex - 1).getLatency();
-            System.out.println("99th Percentile latency: " + percentile99Latency);
-        }
+        final int percentileIndex = (int) Math.ceil(0.99 * stats.size());
+        final long percentile99Latency = stats.get(percentileIndex - 1).getLatency();
+        report.append("99th percentile latency: " + percentile99Latency);
     }
 }
