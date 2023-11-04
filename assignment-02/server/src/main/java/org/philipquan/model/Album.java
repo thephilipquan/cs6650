@@ -4,11 +4,11 @@ import java.util.Objects;
 
 public class Album {
 
-    public static final String ID_KEY = "Id";
-    public static final String ARTIST_KEY = "Artist";
-    public static final String TITLE_KEY = "Title";
-    public static final String YEAR_KEY = "Year";
-    public static final String IMAGE_KEY = "Image";
+    public static final String ID_KEY = "id";
+    public static final String ARTIST_KEY = "artist";
+    public static final String TITLE_KEY = "title";
+    public static final String YEAR_KEY = "year";
+    public static final String IMAGE_KEY = "image";
 
     private final Long id;
     private final String artist;

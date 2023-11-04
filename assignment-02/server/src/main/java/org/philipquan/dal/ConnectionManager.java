@@ -7,34 +7,26 @@ import java.util.Properties;
 
 public class ConnectionManager {
 
-    private final String user = "root";
+    private final String user = "postgres";
 //    private final String password = "AlbumAppToor";
 //    private final String hostname = "albumapptrial.ctt3ctvkrpkp.us-west-2.rds.amazonaws.com";
     private final String password = "toor";
-    private final String hostname = "localhost";
-    private final int port = 3306;
-    private final String database = "AlbumApp";
-    private final String timezone = "UTC";
 
     public Connection getConnection() throws SQLException {
-        Connection connection = null;
-        Properties properties = new Properties();
-        properties.put("user", this.user);
-        properties.put("password", this.password);
-        properties.put("timezone", this.timezone);
+        final String hostname = "localhost";
+        final int port = 5432;
+        final String database = "postgres";
+        final String schema = "album_app";
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
             throw new SQLException(e);
         }
-        final String url = "jdbc:mysql://" + this.hostname + ":" + this.port +
-          "/" + this.database + "?useSSL=false&allowPublicKeyRetrieval=true";
-        connection = DriverManager.getConnection(url, properties);
-        return connection;
-    }
-
-    public void closeConnection(Connection connection) throws SQLException {
-        connection.close();
+        final String url = String.format(
+          "jdbc:postgresql://%s:%d/%s?currentSchema=%s",
+          hostname, port, database, schema
+        );
+        return DriverManager.getConnection(url, user, password);
     }
 }
