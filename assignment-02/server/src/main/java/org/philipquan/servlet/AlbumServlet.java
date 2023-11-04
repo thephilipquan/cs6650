@@ -38,11 +38,16 @@ public class AlbumServlet extends HttpServlet {
     }
 
     /**
-     * Get album by key. Returns {@link HttpServletResponse#SC_BAD_REQUEST} if albumId is missing or the value is not numeric.
+     * GET endpoint for users to query an album's information give the album's id in the database.
+     * Writes all responses to {@link HttpServletResponse#getOutputStream}
+     *
+     * <br><br>
+     *
+     * If {@code albumId} exists, {@link HttpServletResponse#SC_OK} is returned.
+     * If {@code albumId} is missing or is not numeric, {@link HttpServletResponse#SC_BAD_REQUEST} is returned.
      */
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
         Map<String, Object> messages = new HashMap<>();
         final String albumIdKey = "albumId";
@@ -63,7 +68,29 @@ public class AlbumServlet extends HttpServlet {
     }
 
     /**
-     * Returns the new key and size of an image in bytes.
+     * POST endpoint for users to submit an album by passing its image and information as a form.
+     * Writes the album's id in the database and the size of the passed image in bytes to
+     * {@link HttpServletResponse#getOutputStream}.
+     *
+     * <br><br>
+     *
+     * If the parts {@code [image, profile]}, are missing, {@link HttpServletResponse#SC_BAD_REQUEST} is returned.
+     *
+     * <br><br>
+     *
+     * If profile's json does not contain keys for {@code [artist, title, year]}
+     * {@link HttpServletResponse#SC_BAD_REQUEST} is returned.
+     *
+     * <br><br>
+     *
+     * Example curl
+     * <pre>
+     * curl http://localhost:8080/api/albums \
+     *   --request "POST" \
+     *   --header "multipart/form-data' \
+     *   --form image=@path/to/image \
+     *   --form profile='{"artist": "joe", "title": "joe's album", "year": 2023}'
+     * </pre>
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
