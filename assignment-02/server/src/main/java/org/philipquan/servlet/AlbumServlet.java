@@ -45,17 +45,18 @@ public class AlbumServlet extends HttpServlet {
       throws ServletException, IOException {
         response.setContentType("application/json");
         Map<String, Object> messages = new HashMap<>();
-
         final String albumIdKey = "albumId";
-        String trial = request.getParameter(albumIdKey);
-        if (trial == null || trial.trim().isEmpty() || !isNumeric(trial)) {
-            setResponse(messages, response, HttpServletResponse.SC_BAD_REQUEST, "invalid request: missing parameter \"" + albumIdKey + "\"");
+
+        String albumId = request.getParameter(albumIdKey);
+        if (albumId == null || albumId.trim().isEmpty() || !isNumeric(albumId)) {
+            setResponse(messages, response, HttpServletResponse.SC_BAD_REQUEST,
+              String.format("invalid request: missing parameter: %s", albumIdKey));
             return;
         }
-        final Long albumId = Long.parseLong(trial);
-        Album album = albumService.getAlbumById(albumId);
+
+        Album album = albumService.getAlbumById(Long.parseLong(albumId));
         if (album == null) {
-            setResponse(messages, response, HttpServletResponse.SC_NOT_FOUND, albumIdKey + ": " + albumId + " not found");
+            setResponse(messages, response, HttpServletResponse.SC_NOT_FOUND, String.format("albumId: %s not found", albumId));
         } else {
             setResponse(messages, response, HttpServletResponse.SC_OK, album);
         }
@@ -69,38 +70,37 @@ public class AlbumServlet extends HttpServlet {
       throws ServletException, IOException {
         response.setContentType("application/json");
         Map<String, Object> messages = new HashMap<>();
-        final String imageKey = Album.IMAGE_KEY.toLowerCase();
-        final String profileKey = "profile";
-        List<String> required;
+        final String imageKey = "image";
+        final String albumKey = "profile";
+        final String artistKey = "artist";
+        final String titleKey = "title";
+        final String yearKey = "year";
 
-        required = Arrays.asList(imageKey, profileKey);
-        if (!streamContainsAllList(request.getParts().stream().map(Part::getName), required)) {
-            setResponse(messages, response, HttpServletResponse.SC_BAD_REQUEST, "invalid request. Form must contain " + required + ".");
+        Part imagePart = request.getPart(imageKey);
+        Part profilePart = request.getPart(albumKey);
+        if (imagePart == null || profilePart == null) {
+            setResponse(messages, response, HttpServletResponse.SC_BAD_REQUEST,
+              String.format("invalid request. Form must contain %s and %s.", imageKey, albumKey));
             return;
         }
 
-        required = Arrays.asList(Album.ARTIST_KEY.toLowerCase(), Album.TITLE_KEY.toLowerCase(), Album.YEAR_KEY.toLowerCase());
-        Map<String, String> profile = partToMap(request.getPart(profileKey));
-        if (!streamContainsAllList(profile.keySet().stream(), required)) {
-            setResponse(messages, response, HttpServletResponse.SC_BAD_REQUEST, "invalid request. Form must contain " + required + ".");
+        Map<String, String> profile = partToMap(request.getPart(albumKey));
+        if (!profile.keySet().containsAll(Arrays.asList(artistKey, titleKey, yearKey)) || !isNumeric(profile.get(yearKey))) {
+            setResponse(messages, response, HttpServletResponse.SC_BAD_REQUEST,
+              String.format("invalid request. Form must contain %s, %s, %s. Year must be numeric.", artistKey, titleKey, yearKey));
             return;
         }
 
-        String image = IOUtils.toString(request.getPart(imageKey).getInputStream(), StandardCharsets.UTF_8);
-        Album requestedAlbum = new Album(
-          -1L,
-          profile.get(Album.ARTIST_KEY.toLowerCase()),
-          profile.get(Album.TITLE_KEY.toLowerCase()),
-          Integer.parseInt(profile.get(Album.YEAR_KEY.toLowerCase())),
-          image
+        Album requestedAlbum = new Album(-1L,
+          profile.get(artistKey),
+          profile.get(titleKey),
+          Integer.parseInt(profile.get(yearKey)),
+          IOUtils.toString(imagePart.getInputStream(), StandardCharsets.UTF_8)
         );
 
         Album createdAlbum = albumService.createAlbum(requestedAlbum);
-        setResponse(
-          messages,
-          response,
-          HttpServletResponse.SC_CREATED,
-          new ImageMetaData(createdAlbum.getId(), request.getPart(imageKey).getSize())
+        setResponse(messages, response, HttpServletResponse.SC_CREATED,
+          new ImageMetaData(createdAlbum.getId(), imagePart.getSize())
         );
     }
 
@@ -126,19 +126,6 @@ public class AlbumServlet extends HttpServlet {
     }
 
     /**
-     * Returns true if the stream contains all values within {@code list}.
-     *
-     * @param stream a {@link Stream<String>} of Strings.
-     * @param list the list of wanted values within the stream.
-     * @return {@code true} if the stream contains only all values within {@code list}.
-     */
-    private boolean streamContainsAllList(Stream<String> stream, List<String> list) {
-        List<String> result = stream.filter(list::contains).collect(Collectors.toList());
-        return result.size() == list.size(); // Bug if repetitive keys but its okay for hw.
-    }
-
-
-    /**
      * Converts a {@link Part} value into a map.
      *
      * @param part from {@link HttpServletRequest#getPart}
@@ -147,10 +134,7 @@ public class AlbumServlet extends HttpServlet {
      */
     private Map<String, String> partToMap(Part part) throws IOException {
         String json = IOUtils.toString(part.getInputStream(), StandardCharsets.UTF_8);
-        return new Gson().fromJson(
-          json,
-          new TypeToken<Map<String, String>>() {}.getType()
-        );
+        return new Gson().fromJson(json, new TypeToken<Map<String, String>>() {}.getType());
     }
 
 }
