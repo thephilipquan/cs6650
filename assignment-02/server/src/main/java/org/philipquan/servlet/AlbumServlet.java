@@ -23,7 +23,11 @@ import org.philipquan.model.Album;
 import org.philipquan.model.ImageMetaData;
 
 @WebServlet("/albums")
-@MultipartConfig
+@MultipartConfig(
+  fileSizeThreshold=1024*1024*10,
+  maxFileSize=1024*1024*50,
+  maxRequestSize=1024*1024*100
+)
 public class AlbumServlet extends HttpServlet {
 
     private AlbumDao albumService;
