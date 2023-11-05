@@ -93,27 +93,27 @@ public class ClientApp {
      *                    {@code requestCount} amount of times
      */
     public void processThreads(int threadCount, int requestCount, CountDownLatch latch) {
-        try (
-          CloseableHttpClient client = createClient();
-        ) {
             IntStream.range(0, threadCount).forEach(i -> {
                 Runnable instruction = () -> {
-                    callServer(client, requestCount);
+                    callServer(requestCount);
                     latch.countDown();
                 };
                 new Thread(instruction).start();
             });
+    }
+
+    private void callServer(int requestCount) {
+        try (
+          CloseableHttpClient client = createClient();
+        ) {
+            IntStream.range(0, requestCount).forEach(j -> {
+                Integer albumId = postAlbum(client);
+//                Integer albumId = 1;
+                getAlbum(client, albumId);
+            });
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private void callServer(CloseableHttpClient client, int requestCount) {
-        IntStream.range(0, requestCount).forEach(j -> {
-//            Integer albumId = postAlbum(client);
-            Integer albumId = 1;
-            getAlbum(client, albumId);
-        });
     }
 
     /**
@@ -137,6 +137,7 @@ public class ClientApp {
             timer.stop();
             responseBody = EntityUtils.toString(response.getEntity());
             this.methodStatistics.add(RequestStatistic.createPost(response.getStatusLine().getStatusCode(), timer));
+            EntityUtils.consume(response.getEntity());
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
@@ -164,6 +165,17 @@ public class ClientApp {
             throw new RuntimeException(e);
         } finally {
             request.releaseConnection();
+            safeCloseResponse(response);
+        }
+    }
+
+    private void safeCloseResponse(CloseableHttpResponse response) {
+        if (response == null)
+            return;
+        try {
+            response.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
