@@ -1,5 +1,10 @@
 package org.philipquan;
 
+import static java.io.File.separator;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -23,8 +28,8 @@ public class Main {
     public static final Integer REQUEST_RETRY_COUNT = 5;
 
     public static void main(final String[] args) {
-        if (args.length != 5) {
-            throw new RuntimeException("Please provide 5 arguments to run the program. (groupThreadCount, groupCount, delayInSeconds, hostUrl, imagePath)");
+        if (args.length != 6) {
+            throw new RuntimeException("Please provide 5 arguments to run the program. (groupThreadCount, groupCount, delayInSeconds, hostUrl, imagePath, outputPrefix)");
         }
 
         final int groupThreadCount = Integer.parseInt(args[0]);
@@ -32,6 +37,7 @@ public class Main {
         final int delayInSeconds = Integer.parseInt(args[2]);
         final String hostUrl = args[3];
         final String imagePath = args[4];
+        final String outputFilePrefix = args[5];
 
         String image = readFileAsString(imagePath);
         List<RequestStatistic> requestStatistics = Collections.synchronizedList(new ArrayList<>());
@@ -46,7 +52,7 @@ public class Main {
         timer.start();
         client.groupRun();
         timer.stop();
-        reportStatistics(requestStatistics, groupCount, groupThreadCount, timer);
+        reportStatistics(requestStatistics, groupCount, groupThreadCount, outputFilePrefix, timer);
     }
 
     private static String readFileAsString(String path) {
@@ -57,9 +63,11 @@ public class Main {
         }
     }
 
-    private static void reportStatistics(List<RequestStatistic> stats, int groupCount, int groupThreadCount, Timer timer) {
+    private static void reportStatistics(List<RequestStatistic> stats, int groupCount,
+      int groupThreadCount, String outputFilePrefix, Timer timer) {
         StringJoiner report = new StringJoiner("\n");
 
+        report.add(createHeader("Summary"));
         final double runtimeInSeconds = (double) timer.getElapsedTime() / 1000;
         final long throughput = Math.round((groupCount * groupThreadCount * GROUP_REQUEST_COUNT * 2) / runtimeInSeconds);
         report.add("Wall Time: " + runtimeInSeconds + " second(s)");
@@ -70,14 +78,24 @@ public class Main {
         report.add("success " + passed.size());
         report.add("failed: " + failed.size());
 
-        reportRequestType(passed, report);
-        reportRequestType(failed, report);
-        System.out.println(report);
+        reportRequestType("Success", passed, report);
+        reportRequestType("Failure", failed, report);
+
+        String fileName = String.format("%s-groupsize%d-out.txt", outputFilePrefix, groupCount);
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("report/" + fileName));
+            writer.write(report.toString());
+            writer.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private static void reportRequestType(List<RequestStatistic> stats, StringJoiner report) {
+    private static void reportRequestType(String type, List<RequestStatistic> stats, StringJoiner report) {
+        report.add(""); // newline.
+        report.add(createHeader(type));
         if (stats.size() == 0) {
-            report.add("No failure statistics.");
+            report.add(String.format("No %s statistics.", type));
             return;
         }
 
@@ -100,5 +118,10 @@ public class Main {
         final int percentileIndex = stats.size() - ((int) Math.ceil(0.99 * stats.size()));
         final long percentile99Latency = stats.get(percentileIndex - 1).getLatency();
         report.add("99th percentile latency: " + percentile99Latency);
+    }
+
+    private static String createHeader(String title) {
+        final String separator = "==========";
+        return String.format("%s %s %s", separator, title, separator);
     }
 }
