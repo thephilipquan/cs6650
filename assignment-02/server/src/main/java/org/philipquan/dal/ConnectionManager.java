@@ -1,29 +1,38 @@
 package org.philipquan.dal;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
+import org.apache.commons.dbcp.BasicDataSource;
 
 public class ConnectionManager {
 
-    private final String user = "root";
-    private final String password = "roottoor";
+    private final BasicDataSource dataSource;
+
+    public ConnectionManager() {
+        Properties properties = new Properties();
+        try {
+            properties.load(getClass().getClassLoader().getResourceAsStream("database.properties"));
+        } catch (IOException e) {
+            throw new RuntimeException("Error initializing ConnectionManager...", e);
+        }
+
+        System.out.println(properties.getProperty("url"));
+
+        this.dataSource = new BasicDataSource();
+        this.dataSource.setDriverClassName(properties.getProperty("driver"));
+        this.dataSource.setUrl(properties.getProperty("url"));
+        this.dataSource.setUsername(properties.getProperty("user"));
+        this.dataSource.setPassword(properties.getProperty("password"));
+
+        this.dataSource.setMaxIdle(80);
+        this.dataSource.setMaxActive(80);
+    }
 
     public Connection getConnection() throws SQLException {
-        final String hostname = "albumappdatabase.ctt3ctvkrpkp.us-west-2.rds.amazonaws.com";
-        final int port = 5432;
-        final String database = "postgres";
-        final String schema = "album_app";
-        try {
-            Class.forName("org.postgresql.Driver");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            throw new SQLException(e);
-        }
-        final String url = String.format(
-          "jdbc:postgresql://%s:%d/%s?currentSchema=%s",
-          hostname, port, database, schema
-        );
-        return DriverManager.getConnection(url, user, password);
+        return this.dataSource.getConnection();
     }
 }
