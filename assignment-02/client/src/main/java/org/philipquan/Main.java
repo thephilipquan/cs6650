@@ -1,9 +1,6 @@
 package org.philipquan;
 
-import static java.io.File.separator;
-
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -67,6 +64,10 @@ public class Main {
       int groupThreadCount, String outputFilePrefix, Timer timer) {
         StringJoiner report = new StringJoiner("\n");
 
+        String fileName = String.format("%s-groupsize%d-out.txt", outputFilePrefix, groupCount);
+        report.add(String.format("# %s", fileName));
+        report.add(""); // newline.
+
         report.add(createHeader("Summary"));
         final double runtimeInSeconds = (double) timer.getElapsedTime() / 1000;
         final long throughput = Math.round((groupCount * groupThreadCount * GROUP_REQUEST_COUNT * 2) / runtimeInSeconds);
@@ -81,10 +82,10 @@ public class Main {
         reportRequestType("Success", passed, report);
         reportRequestType("Failure", failed, report);
 
-        String fileName = String.format("%s-groupsize%d-out.txt", outputFilePrefix, groupCount);
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter("report/" + fileName));
             writer.write(report.toString());
+            System.out.println("Report saved as " + fileName);
             writer.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -94,6 +95,7 @@ public class Main {
     private static void reportRequestType(String type, List<RequestStatistic> stats, StringJoiner report) {
         report.add(""); // newline.
         report.add(createHeader(type));
+        report.add(""); // newline.
         if (stats.size() == 0) {
             report.add(String.format("No %s statistics.", type));
             return;
@@ -121,7 +123,6 @@ public class Main {
     }
 
     private static String createHeader(String title) {
-        final String separator = "==========";
-        return String.format("%s %s %s", separator, title, separator);
+        return String.format("## %s", title);
     }
 }
