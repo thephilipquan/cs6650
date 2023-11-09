@@ -108,7 +108,6 @@ public class ClientApp {
         ) {
             IntStream.range(0, requestCount).forEach(j -> {
                 Integer albumId = postAlbum(client);
-//                Integer albumId = 1;
                 getAlbum(client, albumId);
             });
         } catch (IOException e) {
