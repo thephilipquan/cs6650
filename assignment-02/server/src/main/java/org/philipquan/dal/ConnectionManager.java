@@ -1,7 +1,5 @@
 package org.philipquan.dal;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -28,8 +26,9 @@ public class ConnectionManager {
         this.dataSource.setUsername(properties.getProperty("user"));
         this.dataSource.setPassword(properties.getProperty("password"));
 
-        this.dataSource.setMaxIdle(80);
-        this.dataSource.setMaxActive(80);
+        this.dataSource.setMinIdle(8);
+        this.dataSource.setMaxIdle(15);
+        this.dataSource.setMaxActive(30);
     }
 
     public Connection getConnection() throws SQLException {
