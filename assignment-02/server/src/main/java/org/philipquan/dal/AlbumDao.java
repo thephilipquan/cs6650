@@ -50,24 +50,24 @@ public class AlbumDao {
     }
 
     public Album createAlbum(Album album) {
-        String query = String.format("INSERT INTO %s (%s, %s, %s, %s) VALUES (?, ?, ?, ?) RETURNING %s;",
+        String query = String.format("INSERT INTO %s (%s, %s, %s, %s) VALUES (?, ?, ?, ?);",
           TABLE_NAME,
-          Album.ARTIST_KEY, Album.TITLE_KEY, Album.YEAR_KEY, Album.IMAGE_KEY,
-          Album.ID_KEY
+          Album.ARTIST_KEY, Album.TITLE_KEY, Album.YEAR_KEY, Album.IMAGE_KEY
         );
-        ResultSet result;
+        ResultSet result = null;
         try (
           Connection connection = this.connectionManager.getConnection();
-          PreparedStatement statement = connection.prepareStatement(query);
+          PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
           ) {
             statement.setString(1, album.getArtist());
             statement.setString(2, album.getTitle());
             statement.setLong(3, album.getYear());
             statement.setBytes(4, album.getImage().getBytes());
-            result = statement.executeQuery();
+            statement.executeUpdate();
+            result = statement.getGeneratedKeys();
             if (result.next()) {
                 return new Album(
-                  result.getLong(Album.ID_KEY),
+                  result.getLong(1),
                   album.getArtist(),
                   album.getTitle(),
                   album.getYear(),
@@ -76,8 +76,9 @@ public class AlbumDao {
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        } finally {
+            safeCloseResultSet(result);
         }
-        safeCloseResultSet(result);
         return null;
     }
 

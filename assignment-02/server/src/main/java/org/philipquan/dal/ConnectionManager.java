@@ -18,8 +18,6 @@ public class ConnectionManager {
             throw new RuntimeException("Error initializing ConnectionManager...", e);
         }
 
-        System.out.println(properties.getProperty("url"));
-
         this.dataSource = new BasicDataSource();
         this.dataSource.setDriverClassName(properties.getProperty("driver"));
         this.dataSource.setUrl(properties.getProperty("url"));
