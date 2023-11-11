@@ -1,4 +1,4 @@
-package org.philipquan;
+package org.philipquan.utility;
 
 public class Timer {
 
