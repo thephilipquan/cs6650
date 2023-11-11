@@ -23,10 +23,9 @@ public class ConnectionManager {
         this.dataSource.setUrl(properties.getProperty("url"));
         this.dataSource.setUsername(properties.getProperty("user"));
         this.dataSource.setPassword(properties.getProperty("password"));
-
-        this.dataSource.setMinIdle(8);
-        this.dataSource.setMaxIdle(15);
-        this.dataSource.setMaxActive(30);
+        this.dataSource.setMinIdle(2); // MAYBE delete.
+        this.dataSource.setMaxIdle(20); // MAYBE delete.
+        this.dataSource.setMaxActive(40);
     }
 
     public Connection getConnection() throws SQLException {
