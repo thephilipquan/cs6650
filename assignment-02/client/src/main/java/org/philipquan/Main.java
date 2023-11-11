@@ -3,8 +3,6 @@ package org.philipquan;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -12,6 +10,12 @@ import java.util.List;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.http.HttpStatus;
+import org.philipquan.connection.ClientApp;
+import org.philipquan.connection.ClientManager;
+import org.philipquan.utility.RequestStatistic;
+import org.philipquan.utility.RunConfiguration;
+import org.philipquan.utility.Timer;
 
 public class Main {
 
@@ -25,57 +29,47 @@ public class Main {
     public static final Integer REQUEST_RETRY_COUNT = 5;
 
     public static void main(final String[] args) {
-        if (args.length != 6) {
-            throw new RuntimeException("Please provide 5 arguments to run the program. (groupThreadCount, groupCount, delayInSeconds, hostUrl, imagePath, outputPrefix)");
-        }
-
-        final int groupThreadCount = Integer.parseInt(args[0]);
-        final int groupCount = Integer.parseInt(args[1]);
-        final int delayInSeconds = Integer.parseInt(args[2]);
-        final String hostUrl = args[3];
-        final String imagePath = args[4];
-        final String outputFilePrefix = args[5];
-
-        String image = readFileAsString(imagePath);
+        RunConfiguration config = new RunConfiguration("run.conf");
+        ClientManager clientManager = new ClientManager();
         List<RequestStatistic> requestStatistics = Collections.synchronizedList(new ArrayList<>());
-        ClientApp client = new ClientApp(groupThreadCount, groupCount, delayInSeconds, hostUrl, image, requestStatistics);
+        ClientApp client = new ClientApp(config, clientManager, requestStatistics);
+
         if (!client.hostUrlExists()) {
-            throw new RuntimeException("Initial connection to host url: " + hostUrl + " failed.");
+            throw new RuntimeException(String.format("Initial connection to host url: %s failed.", config.getHostUrl()));
         }
-        System.out.println("Initial connection to host url: " + hostUrl + " success");
+
+        System.out.println(String.format("Initial connection to host url: %s success.", config.getHostUrl()));
         System.out.println("Initial run...");
         client.initialRun();
+
         Timer timer = new Timer();
         timer.start();
         client.groupRun();
         timer.stop();
-        reportStatistics(requestStatistics, groupCount, groupThreadCount, outputFilePrefix, timer);
+
+        clientManager.closeClient();
+        reportStatistics(requestStatistics, config, timer);
     }
 
-    private static String readFileAsString(String path) {
-        try {
-            return new String(Files.readAllBytes(Paths.get(path)));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static void reportStatistics(List<RequestStatistic> stats, int groupCount,
-      int groupThreadCount, String outputFilePrefix, Timer timer) {
+    private static void reportStatistics(List<RequestStatistic> stats, RunConfiguration config, Timer timer) {
         StringJoiner report = new StringJoiner("\n");
 
-        String fileName = String.format("%s-groupsize%d-out.txt", outputFilePrefix, groupCount);
+        String fileName = String.format("%s-groupsize%d-out.txt", config.getOutPrefix(), config.getGroupCount());
         report.add(String.format("# %s", fileName));
         report.add(""); // newline.
 
         report.add(createHeader("Summary"));
-        final double runtimeInSeconds = (double) timer.getElapsedTime() / 1000;
-        final long throughput = Math.round((groupCount * groupThreadCount * GROUP_REQUEST_COUNT * 2) / runtimeInSeconds);
+        final double runtimeInSeconds = (double) timer.getElapsedTime() / 1000; // to seconds.
+        final long throughput = Math.round((config.getGroupCount() * config.getGroupThreadCount() * GROUP_REQUEST_COUNT * 2) / runtimeInSeconds);
         report.add("Wall Time: " + runtimeInSeconds + " second(s)");
         report.add("Throughput: " + throughput + " requests per second");
 
-        List<RequestStatistic> passed = stats.stream().filter((r) -> r.getStatusCode() <= 201).collect(Collectors.toList());
-        List<RequestStatistic> failed = stats.stream().filter((r) -> r.getStatusCode() > 201).collect(Collectors.toList());
+        List<RequestStatistic> passed = stats.stream()
+          .filter((r) -> r.getStatusCode() <= HttpStatus.SC_CREATED)
+          .collect(Collectors.toList());
+        List<RequestStatistic> failed = stats.stream()
+          .filter((r) -> r.getStatusCode() > HttpStatus.SC_CREATED)
+          .collect(Collectors.toList());
         report.add("success " + passed.size());
         report.add("failed: " + failed.size());
 
