@@ -1,0 +1,23 @@
+# no-elb-groupsize20-out.txt
+
+## Summary
+Wall Time: 232.379 second(s)
+Throughput: 1721 requests per second
+success 402000
+failed: 0
+
+## POST
+
+Min latency: 13
+Max latency: 1340
+Mean latency: 111
+Median latency: 103
+99th percentile latency: 29
+
+## GET
+
+Min latency: 15
+Max latency: 1338
+Mean latency: 101
+Median latency: 91
+99th percentile latency: 27
