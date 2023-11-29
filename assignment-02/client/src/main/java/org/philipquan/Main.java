@@ -73,8 +73,18 @@ public class Main {
         report.add("success " + passed.size());
         report.add("failed: " + failed.size());
 
-        reportRequestType("Success", passed, report);
-        reportRequestType("Failure", failed, report);
+        reportRequestType(
+          "POST",
+          stats.stream()
+            .filter((r) -> r.getRequestType().equals("POST"))
+            .collect(Collectors.toList()),
+          report);
+        reportRequestType(
+          "GET",
+          stats.stream()
+            .filter((r) -> r.getRequestType().equals("GET"))
+            .collect(Collectors.toList()),
+          report);
 
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter("report/" + fileName));
