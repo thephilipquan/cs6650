@@ -47,7 +47,6 @@ public class Main {
         client.groupRun();
         timer.stop();
 
-        clientManager.closeClient();
         reportStatistics(requestStatistics, config, timer);
     }
 
