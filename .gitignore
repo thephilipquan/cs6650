@@ -5,4 +5,5 @@ lib/
 *.iml
 *.sh
 *.properties
+*.conf
 *.pem
