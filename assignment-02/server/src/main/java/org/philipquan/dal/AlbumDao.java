@@ -84,7 +84,7 @@ public class AlbumDao {
 
     private void safeCloseResultSet(ResultSet result) {
         try {
-            result.close();
+            if (result != null) result.close();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
