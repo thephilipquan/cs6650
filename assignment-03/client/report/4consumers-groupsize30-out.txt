@@ -1,0 +1,23 @@
+# 4consumers-groupsize30-out.txt
+
+## Summary
+Wall Time: 62.932 second(s)
+Throughput: 1970 requests per second
+success 124000
+failed: 0
+
+## albums
+
+Min latency: 14
+Max latency: 1236
+Mean latency: 96
+Median latency: 98
+99th percentile latency: 25
+
+## reviews
+
+Min latency: 8
+Max latency: 1245
+Mean latency: 82
+Median latency: 83
+99th percentile latency: 22
