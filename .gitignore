@@ -3,7 +3,7 @@ target/
 out/
 lib/
 *.iml
-*.sh
+.sh
 *.properties
 *.conf
 *.pem
