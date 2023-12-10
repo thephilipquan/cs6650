@@ -80,6 +80,25 @@ public class AlbumDao {
         return null;
     }
 
+    /**
+     * @return the last album id in the database. Returns -1 if {@link ResultSet} is null}.
+     */
+    public long getLastAlbumId() {
+        String query = String.format("SELECT last_value FROM %s_%s_seq;", Album.TABLE_NAME, Album.ID_KEY);
+        try (
+          Connection connection = this.connectionManager.getConnection();
+          PreparedStatement statement = connection.prepareStatement(query);
+          ResultSet result = statement.executeQuery();
+          ) {
+            if (result.next()) {
+                return result.getLong(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return -1;
+    }
+
     private void safeCloseResultSet(ResultSet result) {
         try {
             if (result != null) result.close();
