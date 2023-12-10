@@ -4,6 +4,7 @@ import java.util.Objects;
 
 public class Album {
 
+    public static final String TABLE_NAME = "albums";
     public static final String ID_KEY = "albumId";
     public static final String ARTIST_KEY = "artist";
     public static final String TITLE_KEY = "title";

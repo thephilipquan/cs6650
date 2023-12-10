@@ -8,7 +8,6 @@ import org.philipquan.model.Album;
 
 public class AlbumDao {
 
-    private static final String TABLE_NAME = "albums";
     private static AlbumDao instance;
     protected final DatabaseConnectionManager connectionManager;
 
@@ -27,7 +26,7 @@ public class AlbumDao {
     }
 
     public Album getAlbumById(Long albumId) {
-        String query = String.format("SELECT * FROM %s WHERE albumId = %d;", TABLE_NAME, albumId);
+        String query = String.format("SELECT * FROM %s WHERE albumId = %d;", Album.TABLE_NAME, albumId);
         try (
           Connection connection = this.connectionManager.getConnection();
           PreparedStatement statement = connection.prepareStatement(query);
@@ -50,7 +49,7 @@ public class AlbumDao {
 
     public Album createAlbum(Album album) {
         String query = String.format("INSERT INTO %s (%s, %s, %s, %s) VALUES (?, ?, ?, ?) RETURNING %s;",
-          TABLE_NAME,
+          Album.TABLE_NAME,
           Album.ARTIST_KEY, Album.TITLE_KEY, Album.YEAR_KEY, Album.IMAGE_KEY,
           Album.ID_KEY
         );
