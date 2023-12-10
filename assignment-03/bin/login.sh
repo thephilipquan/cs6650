@@ -13,6 +13,8 @@ elif [ $1 == $CONSUMER_KEY ]; then
 		exit 1
 	fi
 	url=${CONSUMERS[$2]}
+elif [ $1 == $RABBIT_KEY ]; then
+	url=$RABBIT
 else
 	echo no destination found for $1
 	exit 1
