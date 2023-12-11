@@ -16,7 +16,7 @@ public class RunConfig {
     public static final Integer POST_REACTION_LIKE_COUNT = 2;
     public static final String DISLIKE_ENDPOINT = "dislike";
     public static final Integer POST_REACTION_DISLIKE_COUNT = 1;
-    public static final String LAST_ALBUM_ID_ENDPOINT = "albumcount";
+    public static final String LAST_ALBUM_ID_ENDPOINT = "albums/count";
 
     public static final String FORM_IMAGE_KEY = "image";
     public static final String FORM_ALBUM_INFO_KEY = "profile";

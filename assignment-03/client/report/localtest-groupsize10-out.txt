@@ -1,0 +1,37 @@
+# localtest-groupsize10-out.txt
+
+# POST Summary
+Wall Time: 10.091 second(s)
+Throughput: 3964 requests per second
+success 40000
+failed: 0
+
+## POST albums Details
+
+Min latency: 0
+Max latency: 387
+Mean latency: 1
+Median latency: 1
+99th percentile latency: 0
+
+## POST reviews Details
+
+Min latency: 0
+Max latency: 450
+Mean latency: 0
+Median latency: 1
+99th percentile latency: 0
+
+# GET Summary
+Wall Time: 9.078 second(s)
+Throughput: 3550 requests per second
+success 32227
+failed: 2
+
+## GET reviews Details
+
+Min latency: 0
+Max latency: 396
+Mean latency: 0
+Median latency: 1
+99th percentile latency: 0

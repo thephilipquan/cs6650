@@ -35,8 +35,6 @@ public class Main {
         getApp.stopThreads();
 
         FileStatisticsReport report = new FileStatisticsReport();
-        System.out.println("post count: " + postCollector.getCount());
-        System.out.println("get count: " + getCollector.getCount());
         report.out(config, postCollector, getCollector);
     }
 

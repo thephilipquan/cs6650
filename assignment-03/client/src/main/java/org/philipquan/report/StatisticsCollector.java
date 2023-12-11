@@ -13,7 +13,7 @@ public class StatisticsCollector {
         this.timer = new Timer();
     }
 
-    public void add(RequestStatistic statistic) {
+    public synchronized void add(RequestStatistic statistic) {
         this.statistics.add(statistic);
     }
 

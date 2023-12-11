@@ -34,6 +34,7 @@ public class GetApp {
     public void startThreads() {
         System.out.println(String.format("Starting %d GET threads...", RunConfig.GET_THREAD_COUNT));
         this.getLastAlbumIdThread.start();
+        this.collector.startTimer();
         for (int i = 0; i < RunConfig.GET_THREAD_COUNT; i++) {
             Runnable instruction = new GetRandomAlbumIdRunnable(
               this.clientManager.getClient(),
