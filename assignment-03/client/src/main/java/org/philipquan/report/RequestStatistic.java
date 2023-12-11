@@ -17,6 +17,10 @@ public class RequestStatistic {
         return new RequestStatistic(REACTION_ENDPOINT, "POST", statusCode, timer.getElapsedTime());
     }
 
+    public static RequestStatistic createGetReaction(int statusCode, Timer timer) {
+        return new RequestStatistic(REACTION_ENDPOINT, "GET", statusCode, timer.getElapsedTime());
+    }
+
     private RequestStatistic(String endpoint, String requestType, int statusCode, long latency) {
         this.endpoint = endpoint;
         this.requestType = requestType;
@@ -29,15 +33,15 @@ public class RequestStatistic {
     }
 
     public String getRequestType() {
-        return requestType;
+        return this.requestType;
     }
 
     public long getLatency() {
-        return latency;
+        return this.latency;
     }
 
     public int getStatusCode() {
-        return statusCode;
+        return this.statusCode;
     }
 
 }

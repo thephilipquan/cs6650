@@ -10,11 +10,13 @@ import org.apache.http.entity.mime.content.StringBody;
 
 public class RunConfig {
 
+    public static final String RUN_CONFIG_FILENAME = "run.conf";
     public static final String REACTION_ENDPOINT = "reviews";
     public static final String LIKE_ENDPOINT = "like";
     public static final Integer POST_REACTION_LIKE_COUNT = 2;
     public static final String DISLIKE_ENDPOINT = "dislike";
     public static final Integer POST_REACTION_DISLIKE_COUNT = 1;
+    public static final String LAST_ALBUM_ID_ENDPOINT = "albumcount";
 
     public static final String FORM_IMAGE_KEY = "image";
     public static final String FORM_ALBUM_INFO_KEY = "profile";
@@ -24,6 +26,8 @@ public class RunConfig {
     public static final Integer INITIAL_REQUEST_COUNT = 100;
     public static final Integer GROUP_REQUEST_COUNT = 100;
     public static final Integer REQUEST_RETRY_COUNT = 5;
+    public static final Integer GET_THREAD_COUNT = 3;
+    public static final long GET_RANDOM_ALBUM_ID_DELAY_IN_SECONDS = 1;
 
     private final Integer groupThreadCount;
     private final Integer groupCount;

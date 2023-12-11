@@ -7,11 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
-import java.util.stream.IntStream;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -20,64 +17,49 @@ import org.philipquan.model.HttpPostAlbum;
 import org.philipquan.model.HttpPostReaction;
 import org.philipquan.report.RequestStatistic;
 import org.philipquan.RunConfig;
+import org.philipquan.report.StatisticsCollector;
 import org.philipquan.report.Timer;
 
 
-public class ClientApp {
+public class PostApp {
     private final RunConfig config;
     private final ClientManager clientManager;
-    private final List<RequestStatistic> requestStatistics;
+    private final StatisticsCollector collector;
 
-    public ClientApp(RunConfig config, ClientManager clientManager, List<RequestStatistic> requestStatistics) {
+    public PostApp(RunConfig config, ClientManager clientManager, StatisticsCollector collector) {
         this.config = config;
         this.clientManager = clientManager;
-        this.requestStatistics = requestStatistics;
-    }
-
-    /**
-     * @return {@code true} if a GET request to {@code this.hostUrl} returns a status code between
-     * {@link HttpStatus#SC_OK} and {@link HttpStatus#SC_BAD_REQUEST}.
-     */
-    public Boolean hostUrlExists() {
-        HttpGet request = new HttpGet(String.format("%s/%s", this.config.getHostUrl(), ALBUM_ENDPOINT));
-        int statusCode;
-        try {
-            statusCode = this.clientManager.getClient().execute(request).getStatusLine().getStatusCode();
-        } catch (IOException e) {
-            return false;
-        }
-        return statusCode >= HttpStatus.SC_OK && statusCode <= HttpStatus.SC_BAD_REQUEST;
+        this.collector = collector;
     }
 
     public void initialRun() {
         CountDownLatch latch = new CountDownLatch(INITIAL_THREAD_COUNT);
-        createThreadsAndRequest(INITIAL_THREAD_COUNT, INITIAL_REQUEST_COUNT, latch);
+        createThreadsAndRequest(INITIAL_THREAD_COUNT, INITIAL_REQUEST_COUNT, latch, false);
         try {
             latch.await();
-            System.out.println("Initial run completed.");
         } catch (InterruptedException e) {
-            System.out.println("Something went wrong in initialRun()");
-            throw new RuntimeException(e);
+            throw new RuntimeException("Something went wrong in initialRun()", e);
         }
     }
 
     public void groupRun() {
         CountDownLatch latch = new CountDownLatch(this.config.getGroupCount() * this.config.getGroupThreadCount());
-        IntStream.range(0, this.config.getGroupCount()).forEach(i -> {
+        this.collector.startTimer();
+        for (int i = 0; i < this.config.getGroupCount(); i++) {
             System.out.println("Processing group: " + i + "...");
-            createThreadsAndRequest(this.config.getGroupThreadCount(), GROUP_REQUEST_COUNT, latch);
+            createThreadsAndRequest(this.config.getGroupThreadCount(), GROUP_REQUEST_COUNT, latch, true);
             try {
                 Thread.sleep(this.config.getDelayInSeconds() * 1000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-        });
+        }
         try {
             latch.await();
+            this.collector.stopTimer();
             System.out.println("Processing group completed.");
         } catch (InterruptedException e) {
-            System.out.println("Something went wrong in processGroup()");
-            throw new RuntimeException(e);
+            throw new RuntimeException("Something went wrong in processGroup()", e);
         }
     }
 
@@ -88,24 +70,24 @@ public class ClientApp {
      * @param latch the countdown latch to decrement every time a thread is finished calling
      *                    {@code requestCount} amount of times
      */
-    public void createThreadsAndRequest(int threadCount, int requestCount, CountDownLatch latch) {
-            IntStream.range(0, threadCount).forEach(i -> {
+    public void createThreadsAndRequest(int threadCount, int requestCount, CountDownLatch latch, boolean collectStats) {
+            for (int i = 0; i < threadCount; i++) {
                 Runnable instruction = () -> {
                     CloseableHttpClient client = this.clientManager.getClient();
-                    IntStream.range(0, requestCount).forEach(j -> {
-                        Integer albumId = postAlbum(client);
-                        reactToAlbum(client, albumId);
-                    });
+                    for (int j = 0; j < requestCount; j++) {
+                        Integer albumId = postAlbum(client, collectStats);
+                        reactToAlbum(client, albumId, collectStats);
+                    }
                     latch.countDown();
                 };
                 new Thread(instruction).start();
-            });
+            }
     }
 
     /**
      * @return The id of the newly posted album.
      */
-    private Integer postAlbum(CloseableHttpClient client) {
+    private Integer postAlbum(CloseableHttpClient client, boolean collectStats) {
         HttpPost request = new HttpPostAlbum(this.config.getHostUrl());
 
         HttpEntity entity = MultipartEntityBuilder.create()
@@ -122,7 +104,10 @@ public class ClientApp {
             response = client.execute(request);
             timer.stop();
             responseBody = EntityUtils.toString(response.getEntity());
-            this.requestStatistics.add(RequestStatistic.createPostAlbum(response.getStatusLine().getStatusCode(), timer));
+            // condition so we don't collect stats for initialRun.
+            if (collectStats) {
+                this.collector.add(RequestStatistic.createPostAlbum(response.getStatusLine().getStatusCode(), timer));
+            }
             EntityUtils.consume(response.getEntity());
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -138,7 +123,7 @@ public class ClientApp {
         return Integer.parseInt(match.group(1));
     }
 
-    private void reactToAlbum(CloseableHttpClient client, Integer albumId) {
+    private void reactToAlbum(CloseableHttpClient client, Integer albumId, boolean collectStats) {
         HttpPost likeRequest = new HttpPostReaction(this.config.getHostUrl(), LIKE_ENDPOINT, albumId);
         HttpPost dislikeRequest = new HttpPostReaction(this.config.getHostUrl(), DISLIKE_ENDPOINT, albumId);
         List<HttpPost> requests = new ArrayList<>();
@@ -156,7 +141,10 @@ public class ClientApp {
                 timer.start();
                 response = client.execute(request);
                 timer.stop();
-                this.requestStatistics.add(RequestStatistic.createPostReaction(response.getStatusLine().getStatusCode(), timer));
+                // condition so we don't collect stats for initialRun.
+                if (collectStats) {
+                    this.collector.add(RequestStatistic.createPostReaction(response.getStatusLine().getStatusCode(), timer));
+                }
                 EntityUtils.consume(response.getEntity());
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -173,6 +161,7 @@ public class ClientApp {
         dislikeRequest.releaseConnection();
     }
 
+    // todo delete
     private void safeCloseResponse(CloseableHttpResponse response) {
     }
 }
