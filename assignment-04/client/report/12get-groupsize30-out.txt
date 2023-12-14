@@ -1,4 +1,4 @@
-# hw4-12get-groupsize30-out.txt
+# 12get-groupsize30-out.txt
 
 # POST Summary
 Wall Time: 77.56 second(s)

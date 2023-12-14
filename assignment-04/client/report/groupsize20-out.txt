@@ -1,4 +1,4 @@
-# hw4-fixed-groupsize20-out.txt
+# groupsize20-out.txt
 
 # POST Summary
 Wall Time: 50.897 second(s)
