@@ -1,0 +1,37 @@
+# hw4-groupsize20-out.txt
+
+# POST Summary
+Wall Time: 50.836 second(s)
+Throughput: 1574 requests per second
+success 80000
+failed: 0
+
+## POST albums Details
+
+Min latency: 17
+Max latency: 567
+Mean latency: 91
+Median latency: 89
+99th percentile latency: 30
+
+## POST reviews Details
+
+Min latency: 11
+Max latency: 502
+Mean latency: 78
+Median latency: 75
+99th percentile latency: 26
+
+# GET Summary
+Wall Time: 49.82 second(s)
+Throughput: 44 requests per second
+success 2195
+failed: 4
+
+## GET reviews Details
+
+Min latency: 11
+Max latency: 398
+Mean latency: 67
+Median latency: 61
+99th percentile latency: 24
