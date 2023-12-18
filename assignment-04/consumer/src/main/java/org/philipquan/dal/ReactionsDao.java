@@ -5,22 +5,26 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import org.philipquan.model.Reaction;
 
+/**
+ * Interface for interacting with Data access layer via exposed API.
+ */
 public class ReactionsDao {
 
-    private static ReactionsDao instance;
-    private ConnectionManager connectionManager;
+    private final ConnectionManager connectionManager;
 
-    private ReactionsDao() {
-        this.connectionManager = new ConnectionManager();
+    /**
+     * @param connectionManager the {@link javax.sql.DataSource} wrapper
+     */
+    public ReactionsDao(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
     }
 
-    public static ReactionsDao getInstance() {
-        if (instance == null) {
-            instance = new ReactionsDao();
-        }
-        return instance;
-    }
-
+    /**
+	 * Inserts the reaction into the database. If the albumId already exists,
+	 * updates the reaction instead.
+	 *
+     * @param reaction The reaction to insert or update.
+     */
     public void addReaction(Reaction reaction) {
         String query = "INSERT INTO reactions values (?,?,?)"
           + " ON CONFLICT (albumId) DO UPDATE"

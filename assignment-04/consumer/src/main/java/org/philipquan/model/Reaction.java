@@ -1,18 +1,29 @@
 package org.philipquan.model;
 
-import com.google.gson.Gson;
 import java.util.Objects;
 
+import com.google.gson.Gson;
+
 public class Reaction {
+
     private int albumId;
     private int likes;
     private int dislikes;
 
+    /**
+     * @param json the json representation of the object to deserialize from
+     * @return the serialization of the passed json
+     */
     public static Reaction fromJson(String json) {
         Gson gson = new Gson();
         return gson.fromJson(json, Reaction.class);
     }
 
+    /**
+     * @param albumId the albumId to react to
+     * @param likes the number of likes to react
+     * @param dislikes the number of dislikes to react
+     */
     public Reaction(int albumId, int likes, int dislikes) {
         this.albumId = albumId;
         this.likes = likes;

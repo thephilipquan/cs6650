@@ -1,10 +1,10 @@
 package org.philipquan.dal;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Properties;
+
 import javax.sql.DataSource;
+
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnection;
@@ -13,39 +13,47 @@ import org.apache.commons.dbcp2.PoolingDataSource;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.philipquan.model.Config;
 
+/**
+ * A pooling connection manager wrapping {@link DataSource}.
+ */
 public class ConnectionManager {
 
-    public static int MAX_ACTIVE;
+    private final int maxActive;
     private DataSource dataSource;
 
-    public ConnectionManager() {
-        Properties properties = new Properties();
-        try {
-            properties.load(getClass().getClassLoader().getResourceAsStream("server.properties"));
-        } catch (IOException e) {
-            throw new RuntimeException("Error initializing ConnectionManager...", e);
-        }
-        this.dataSource = createDataSource(properties);
+    /**
+     * @param config the project's config
+     * @param threadCount the number of threads to spawns. Each thread will
+	 * manage one consumer
+     */
+    public ConnectionManager(Config config, int threadCount) {
+        this.dataSource = createDataSource(config);
+		this.maxActive = threadCount / 2;
     }
 
-    private DataSource createDataSource(Properties properties) {
-        // Following instructions per https://github.com/apache/commons-dbcp/blob/fc2af699d818bf980b9ae671282fd17048580ec5/doc/PoolingDataSourceExample.java
+    private DataSource createDataSource(Config config) {
+        // Following instructions per https://github.com/apache/commons-dbcp/blob/master/doc/PoolingDataSourceExample.java
         ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(
-          properties.getProperty("db.url"),
-          properties.getProperty("db.user"),
-          properties.getProperty("db.password")
+			config.getDatabaseUrl(),
+			config.getDatabaseUser(),
+			config.getDatabasePassword()
         );
 
         PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
         GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
-        poolConfig.setMaxTotal(MAX_ACTIVE);
+        poolConfig.setMaxTotal(this.maxActive);
         ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory, poolConfig);
         poolableConnectionFactory.setPool(connectionPool);
         PoolingDataSource<PoolableConnection> dataSource = new PoolingDataSource<>(connectionPool);
         return dataSource;
     }
 
+    /**
+     * @return a connection from the connection pool
+     * @throws SQLException from the database
+     */
     public Connection getConnection() throws SQLException {
         return this.dataSource.getConnection();
     }
