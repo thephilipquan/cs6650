@@ -21,49 +21,49 @@ import org.philipquan.servlet.validator.RequestValidator;
 @WebServlet("/reviews/*")
 public class ReviewServlet extends HttpServlet {
 
-    private MQConnectionManager mbManager;
+	private MQConnectionManager mbManager;
 
-    public void init() {
-        this.mbManager = new MQConnectionManager();
-    }
+	public void init() {
+		this.mbManager = new MQConnectionManager();
+	}
 
-    @Override
-    public void destroy() {
-        super.destroy();
-        this.mbManager.close();
-    }
+	@Override
+	public void destroy() {
+		super.destroy();
+		this.mbManager.close();
+	}
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("application/json");
-        Map<String, Object> messages = new HashMap<>();
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		response.setContentType("application/json");
+		Map<String, Object> messages = new HashMap<>();
 
-        RequestValidator validator = new PostReviewValidator();
-        if (!validator.validate(request)) {
-            setResponse(messages, response, validator.getStatus(), validator.getErrorMessage());
-            return;
-        }
+		RequestValidator validator = new PostReviewValidator();
+		if (!validator.validate(request)) {
+			setResponse(messages, response, validator.getStatus(), validator.getErrorMessage());
+			return;
+		}
 
-        String action = (String) validator.getParameter("action");
-        String albumId = (String) validator.getParameter("albumId");
-        int likes = 0;
-        int dislikes = 0;
-        if (action.equals("like")) {
-            likes = 1;
-        } else {
-            dislikes = 1;
-        }
+		String action = (String) validator.getParameter("action");
+		String albumId = (String) validator.getParameter("albumId");
+		int likes = 0;
+		int dislikes = 0;
+		if (action.equals("like")) {
+			likes = 1;
+		} else {
+			dislikes = 1;
+		}
 
-        try {
-            Channel channel = this.mbManager.getChannel();
-            String exchange = "";
-            BasicProperties properties = null;
-            byte[] body = String.format("{\"albumId\":%s, \"likes\":%d, \"dislikes\":%d}", albumId, likes, dislikes).getBytes();
+		try {
+			Channel channel = this.mbManager.getChannel();
+			String exchange = "";
+			BasicProperties properties = null;
+			byte[] body = String.format("{\"albumId\":%s, \"likes\":%d, \"dislikes\":%d}", albumId, likes, dislikes).getBytes();
 
-            channel.basicPublish(exchange, MQConnectionManager.REACTION_QUEUE, properties, body);
-        } catch (TimeoutException e) {
-            throw new RuntimeException(e);
-        }
-        setResponse(messages, response, HttpServletResponse.SC_CREATED, "write successful");
-    }
+			channel.basicPublish(exchange, MQConnectionManager.REACTION_QUEUE, properties, body);
+		} catch (TimeoutException e) {
+			throw new RuntimeException(e);
+		}
+		setResponse(messages, response, HttpServletResponse.SC_CREATED, "write successful");
+	}
 }
