@@ -2,5 +2,5 @@
 
 . ./source-me.sh
 
-scp -i $PEMKEY ../resources/rabbitmq.repo ec2-user@$RABBIT:/home/ec2-user
+scp -i $PEMKEY rabbitmq.repo ec2-user@$RABBIT:/home/ec2-user
 

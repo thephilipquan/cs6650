@@ -9,8 +9,7 @@ elif [ $1 == $CONSUMER_KEY ]; then
 		echo must pass threadCount for consumers
 		exit 1
 	fi
-	for url in "${CONSUMERS[@]}"
-	do
+	for url in "${CONSUMERS[@]}"; do
 		ssh -i $PEMKEY ec2-user@$url -f "java -jar consumer.jar $2"
 	done
 else
