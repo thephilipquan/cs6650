@@ -7,8 +7,7 @@ if [ $1 == $SERVER_KEY ]; then
 		../server/out/artifacts/$SERVER_ARTIFACT/$SERVER_ARTIFACT.war \
 		ec2-user@$SERVER:/usr/share/tomcat/webapps/
 elif [ $1 == $CONSUMER_KEY ]; then
-	for url in ${CONSUMERS[@]}
-	do
+	for url in ${CONSUMERS[@]}; do
 		scp -i $PEMKEY \
 			../consumer/out/artifacts/$CONSUMER_ARTIFACT\_jar/$CONSUMER_ARTIFACT.jar \
 			ec2-user@$url:/home/ec2-user/
