@@ -1,4 +1,4 @@
-# distributed-backedn-web-application
+# distributed-backend-web-application
 
 ## summary
 
