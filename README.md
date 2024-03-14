@@ -46,7 +46,6 @@ mq.password = <string>
 ### consumer
 
 ```
-server.properties
 db.driver = <string>
 db.url = <string>
 db.user = <string>
