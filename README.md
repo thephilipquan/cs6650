@@ -1,11 +1,11 @@
-# cs6650
+# distributed-backedn-web-application
 
 ## summary
 
 This repo consists of three java projects.
 
-1. Server - Tomcat, AWS, PostgreSQL - A backend web application that exposes functionality for adding, requesting info, and reacting to a music album.
-2. Consumer - RabbitMQ - A RabbitMQ consumer that eventually updates the database with time-insensitive posts.
+1. Server -  A backend web application that exposes functionality for adding, requesting info, and reacting to a music album.
+2. Consumer - A RabbitMQ consumer that eventually updates the database with time-insensitive posts.
 3. Client - A mock project to spam the server with 100,000+ requests to simulate user load in real time.
 
 ## tech stack
