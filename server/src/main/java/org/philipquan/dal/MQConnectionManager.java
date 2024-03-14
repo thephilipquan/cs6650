@@ -15,7 +15,7 @@ import com.rabbitmq.client.ConnectionFactory;
 public class MQConnectionManager {
 
 	// this is duplicated in DatabaseConnectionManager
-	public static final String CONFIG_FILE = "server.properties";
+	public static final String CONFIG_FILE = "config.properties";
 	public static final String REACTION_QUEUE = "reactions";
 	private ConnectionFactory factory;
 	private Connection connection;

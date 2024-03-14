@@ -10,7 +10,7 @@ import org.apache.http.entity.mime.content.StringBody;
 
 public class RunConfig {
 
-    public static final String RUN_CONFIG_FILENAME = "run.conf";
+    public static final String RUN_CONFIG_FILENAME = "config.properties";
     public static final String REACTION_ENDPOINT = "reviews";
     public static final String LIKE_ENDPOINT = "like";
     public static final Integer POST_REACTION_LIKE_COUNT = 2;

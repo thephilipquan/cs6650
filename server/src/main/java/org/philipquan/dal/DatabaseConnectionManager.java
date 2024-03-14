@@ -13,7 +13,7 @@ import org.apache.tomcat.jdbc.pool.PoolProperties;
  */
 public class DatabaseConnectionManager {
 
-	public static final String CONFIG_FILE = "server.properties";
+	public static final String CONFIG_FILE = "config.properties";
 	private final DataSource dataSource;
 
 	/**
